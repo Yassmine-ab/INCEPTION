@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  mariadb:
+    container_name: mariadb
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    image: mariadb:inception
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - inception-network
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  wordpress:
+    container_name: wordpress
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    image: wordpress:inception
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception-network
+    env_file:
+      - .env
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    image: nginx:inception
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception-network
+    ports:
+      - "443:443"
+    env_file:
+      - .env
+    depends_on:
+      - wordpress
+    restart: unless-stopped
+
+volumes:
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/yaabdall/data/wordpress
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/yaabdall/data/mariadb
+
+networks:
+  inception-network:
+    driver: bridge

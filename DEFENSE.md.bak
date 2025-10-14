@@ -1,0 +1,296 @@
+# Inception - Guide de Défense
+
+## 🎯 Points Clés pour la Défense
+
+### Architecture Globale
+- **8 containers** : nginx, wordpress, mariadb, redis, ftp, adminer, website, portainer
+- **3 volumes** : wordpress_data, mariadb_data, portainer_data
+- **1 network** : inception (bridge)
+- **Tous les services** redémarrent automatiquement (restart: unless-stopped)
+
+---
+
+## 📋 Partie Obligatoire
+
+### 1. NGINX
+- **Base** : Debian Bullseye
+- **SSL/TLS** : 1.2 et 1.3 uniquement (pas de 1.0 ou 1.1)
+- **Certificat** : Auto-signé avec OpenSSL
+- **Port** : 443 (HTTPS uniquement)
+- **Rôle** : Reverse proxy vers WordPress (FastCGI)
+- **PID 1** : `nginx -g "daemon off;"`
+
+**Commandes de vérification** :
+```bash
+docker exec nginx nginx -V
+# Vérifier ssl_protocols dans la config
+docker exec nginx cat /etc/nginx/nginx.conf | grep ssl_protocols
+```
+
+### 2. WordPress
+- **Base** : Debian Bullseye
+- **PHP** : 7.4-FPM (sans nginx)
+- **WP-CLI** : Installation automatique de WordPress
+- **Port** : 9000 (FastCGI, non exposé)
+- **Utilisateurs** : 
+  - Admin : `wpadmin` (pas "admin")
+  - Éditeur : `wpeditor`
+- **PID 1** : `php-fpm7.4 -F`
+
+**Commandes de vérification** :
+```bash
+docker exec wordpress wp user list --allow-root
+docker exec wordpress wp plugin list --allow-root
+docker exec wordpress wp redis status --allow-root
+```
+
+### 3. MariaDB
+- **Base** : Debian Bullseye
+- **Version** : 10.5+
+- **Port** : 3306 (non exposé, réseau interne)
+- **Base de données** : wordpress
+- **Utilisateurs** : root + wpuser
+- **PID 1** : `mysqld --user=mysql`
+
+**Commandes de vérification** :
+```bash
+docker exec mariadb mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "SHOW DATABASES;"
+docker exec mariadb mysql -u${MYSQL_USER} -p${MYSQL_PASSWORD} -e "USE wordpress; SHOW TABLES;"
+```
+
+### 4. Volumes
+- **wordpress_data** : `/home/yaabdall/data/wordpress`
+- **mariadb_data** : `/home/yaabdall/data/mariadb`
+- Persistance garantie même après `docker-compose down`
+
+**Commandes de vérification** :
+```bash
+ls -la /home/yaabdall/data/wordpress
+ls -la /home/yaabdall/data/mariadb
+docker volume ls
+```
+
+### 5. Network
+- **Nom** : inception
+- **Type** : bridge
+- **Isolation** : Tous les services communiquent entre eux
+- **Pas de** : `--link`, `links:`, ou `network: host`
+
+**Commandes de vérification** :
+```bash
+docker network ls
+docker network inspect inception
+```
+
+---
+
+## ⭐ Partie Bonus
+
+### 1. Redis Cache
+- **Utilité** : Cache objet pour WordPress → Réduit les requêtes SQL
+- **Plugin** : Redis Object Cache (installé automatiquement)
+- **Port** : 6379 (interne uniquement)
+- **Configuration** : WP_REDIS_HOST=redis dans wp-config.php
+
+**Démonstration** :
+```bash
+docker exec wordpress wp redis status --allow-root
+# Doit afficher "Connected"
+docker exec redis redis-cli ping
+# Doit répondre "PONG"
+```
+
+### 2. FTP Server
+- **Software** : vsftpd
+- **Utilité** : Accès FTP au volume WordPress
+- **Ports** : 21 (control), 21000-21010 (passive)
+- **User** : ftpuser
+
+**Démonstration** :
+```bash
+ftp yaabdall.42.fr
+# Login avec ftpuser / ftp_secure_password_345
+ls
+# Devrait lister les fichiers WordPress
+```
+
+### 3. Site Statique
+- **Technologie** : HTML/CSS/JavaScript pur (PAS DE PHP !)
+- **Serveur** : NGINX
+- **Port** : 8081
+- **Contenu** : Portfolio / site vitrine du projet
+- **URL** : http://yaabdall.42.fr:8081
+
+**Démonstration** :
+```bash
+curl http://yaabdall.42.fr:8081
+docker exec website cat /usr/share/nginx/html/index.html | grep -i php
+# Ne doit rien retourner (pas de PHP)
+```
+
+### 4. Adminer
+- **Utilité** : Interface web pour gérer MariaDB
+- **Alternative** : Plus léger que phpMyAdmin
+- **Port** : 8080
+- **Accès** : https://yaabdall.42.fr:8080
+
+**Démonstration** :
+- Ouvrir https://yaabdall.42.fr:8080
+- Se connecter avec les identifiants MySQL
+- Naviguer dans la base de données WordPress
+
+### 5. Portainer (Service au choix)
+- **Utilité** : Interface de gestion Docker
+- **Fonctionnalités** : 
+  - Visualisation des containers
+  - Logs en temps réel
+  - Statistiques (CPU, RAM)
+  - Gestion images/volumes/networks
+- **Port** : 9000
+- **Justification** : Outil professionnel pour DevOps
+
+**Démonstration** :
+- Ouvrir https://yaabdall.42.fr:9000
+- Créer un compte admin
+- Montrer la liste des containers et leurs stats
+
+---
+
+## 🔍 Points de Vérification Importants
+
+### Sécurité
+✅ Pas de mots de passe dans les Dockerfiles  
+✅ Variables dans .env  
+✅ Secrets dans secrets/ (ignorés par git)  
+✅ TLS 1.2/1.3 uniquement  
+
+### Bonnes Pratiques Docker
+✅ Pas de `tail -f`  
+✅ Pas de boucles infinites  
+✅ Processus en foreground (PID 1)  
+✅ Images de base : Debian Bullseye ou Alpine  
+✅ Pas d'images pré-construites (sauf base OS)  
+
+### Dockerfiles
+✅ Un Dockerfile par service  
+✅ Nom : Dockerfile (pas Dockerfile.nginx, etc.)  
+✅ Appelés par docker-compose.yml  
+✅ Images construites localement  
+
+### Utilisateurs WordPress
+✅ Utilisateur admin sans "admin" dans le nom  
+✅ Au moins 2 utilisateurs  
+
+---
+
+## 🚀 Commandes de Démonstration
+
+### Démarrage
+```bash
+make              # Build et start
+docker ps         # Voir tous les containers running
+docker-compose -f srcs/docker-compose.yml ps
+```
+
+### Vérification des Services
+```bash
+# Test NGINX SSL
+curl -k https://yaabdall.42.fr
+
+# Test WordPress
+docker exec wordpress wp core version --allow-root
+
+# Test MariaDB
+docker exec mariadb mysqladmin ping -h localhost -uroot -p${MYSQL_ROOT_PASSWORD}
+
+# Test Redis
+docker exec redis redis-cli ping
+
+# Voir les logs
+make logs
+docker-compose -f srcs/docker-compose.yml logs nginx
+```
+
+### Vérification des Volumes
+```bash
+ls -la /home/yaabdall/data/
+docker volume inspect inception_wordpress_data
+docker volume inspect inception_mariadb_data
+```
+
+### Vérification du Network
+```bash
+docker network inspect inception
+# Voir tous les containers connectés
+```
+
+### Test de Redémarrage Automatique
+```bash
+docker stop nginx
+docker ps -a        # Status = Restarting
+# Attendre quelques secondes
+docker ps           # nginx devrait être UP
+```
+
+---
+
+## 💡 Questions Fréquentes lors de la Défense
+
+### "Pourquoi pas de docker-compose pull ?"
+- Toutes les images sont construites localement
+- Respect du sujet : pas d'images pré-faites
+
+### "Comment gérer les secrets ?"
+- Fichier .env pour les variables
+- Dossier secrets/ pour les mots de passe
+- .gitignore pour ne pas versionner
+
+### "Pourquoi Redis pour WordPress ?"
+- Réduit les requêtes SQL
+- Cache les objets fréquemment accédés
+- Améliore les performances significativement
+
+### "Expliquez le PID 1"
+- Premier processus du container
+- Si PID 1 meurt, le container s'arrête
+- Doit tourner en foreground (pas daemon)
+
+### "Pourquoi TLS 1.2/1.3 uniquement ?"
+- TLS 1.0 et 1.1 sont dépréciés (vulnérabilités)
+- Best practice de sécurité moderne
+
+---
+
+## 📝 Checklist Finale
+
+Avant la défense, vérifier :
+
+- [ ] `/etc/hosts` contient `127.0.0.1 yaabdall.42.fr`
+- [ ] Dossiers `/home/yaabdall/data/*` existent
+- [ ] `make` démarre tous les services sans erreur
+- [ ] https://yaabdall.42.fr est accessible
+- [ ] WordPress admin accessible et fonctionnel
+- [ ] 2 utilisateurs WordPress créés
+- [ ] Redis cache activé dans WordPress
+- [ ] Tous les services bonus accessibles
+- [ ] Aucune image Docker n'est pull depuis Docker Hub
+- [ ] Pas de mots de passe dans les Dockerfiles
+- [ ] .env et secrets/ sont ignorés par git
+- [ ] `docker ps` montre 8 containers running
+- [ ] Les containers redémarrent après un stop
+
+---
+
+## 🎓 Points Bonus à Mentionner
+
+1. **Redis** : Optimisation des performances WordPress
+2. **FTP** : Facilite la gestion des fichiers pour les clients
+3. **Site Statique** : Démontre la maîtrise de HTML/CSS/JS
+4. **Adminer** : Alternative légère et efficace à phpMyAdmin
+5. **Portainer** : Outil professionnel DevOps pour monitoring
+
+**Total** : 5 services bonus = Maximum de points !
+
+---
+
+Bonne défense ! 🚀
