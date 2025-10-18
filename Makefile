@@ -51,31 +51,31 @@ all:
 				@echo "\n🚀 $(GREEN)Starting Inception...$(DEFAULT)\n"
 				@mkdir -p $(DATA_PATH)/wordpress
 				@mkdir -p $(DATA_PATH)/mariadb
-				@docker-compose -f $(COMPOSE_FILE) up -d --build
+				@docker compose -f $(COMPOSE_FILE) up -d --build
 				@echo "\n✅ $(GREEN)Inception is running!$(DEFAULT)"
 				@echo "🌐 Visit: $(CYAN)https://$(LOGIN).42.fr$(DEFAULT)\n"
 
 up:
-				@docker-compose -f $(COMPOSE_FILE) up -d
+				@docker compose -f $(COMPOSE_FILE) up -d
 				@echo "\n✅ $(GREEN)Services started$(DEFAULT)\n"
 
 down:
-				@docker-compose -f $(COMPOSE_FILE) down
+				@docker compose -f $(COMPOSE_FILE) down
 				@echo "\n� $(YELLOW)Services stopped$(DEFAULT)\n"
 
 stop:
-				@docker-compose -f $(COMPOSE_FILE) stop
+				@docker compose -f $(COMPOSE_FILE) stop
 				@echo "\n⏸️  $(YELLOW)Services paused$(DEFAULT)\n"
 
 start:
-				@docker-compose -f $(COMPOSE_FILE) start
+				@docker compose -f $(COMPOSE_FILE) start
 				@echo "\n▶️  $(GREEN)Services resumed$(DEFAULT)\n"
 
 status:
-				@docker-compose -f $(COMPOSE_FILE) ps
+				@docker compose -f $(COMPOSE_FILE) ps
 
 logs:
-				@docker-compose -f $(COMPOSE_FILE) logs -f
+				@docker compose -f $(COMPOSE_FILE) logs -f
 
 clean:			down
 				@echo "🧹 $(RED)Cleaning containers and networks...$(DEFAULT)"
