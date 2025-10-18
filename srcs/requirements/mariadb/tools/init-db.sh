@@ -16,7 +16,7 @@ chown -R mysql:mysql /var/run/mysqld
 if [ ! -d "/var/lib/mysql/mysql" ]; then
 	echo -e "${YELLOW}Initializing MariaDB data directory...${NC}"
 	mysql_install_db --user=mysql --datadir=/var/lib/mysql
-	
+
 	# Lance MariaDB temporairement pour la configuration
 	echo -e "${YELLOW}Starting MariaDB temporarily...${NC}"
 	mysqld --user=mysql --datadir=/var/lib/mysql --skip-networking &
@@ -41,9 +41,6 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
 	echo -e "${YELLOW}Configuring MariaDB...${NC}"
 
 	mysql -uroot << EOF
--- Definit le mot de passe root
-ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
-
 -- Creee la base de donnees
 CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
 
