@@ -58,4 +58,4 @@ chmod -R 755 /var/www/html
 echo -e "${GREEN}Starting WordPress...${NC}"
 
 # Lance PHP-FPM en avant-plan pour que le conteneur reste actif
-exec php-fpm8.1 -F
+exec php-fpm8.2 -F
