@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y \
 	mariadb-client \
 	&& rm -rf /var/lib/apt/lists/*
 
-# Configure le socket de php-fpm8.2 pour qu'il ecoute sur le port 9000 au lieu d'un socket file
-RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 9000/g' /etc/php/8.2/fpm/pool.d/www.conf
+# Configure le socket de php-fpm pour qu'il ecoute sur le port 9000 sur toutes les interfaces
+RUN sed -i 's/listen = \/run\/php\/php8.2-fpm.sock/listen = 0.0.0.0:9000/g' /etc/php/8.2/fpm/pool.d/www.conf
 
 RUN mkdir -p /var/www/html
 WORKDIR /var/www/html

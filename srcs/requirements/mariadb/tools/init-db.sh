@@ -40,7 +40,7 @@ echo -e "${GREEN}MariaDB started successfully${NC}"
 
 echo -e "${YELLOW}Configuring MariaDB...${NC}"
 
-mysql << EOF
+mysql -uroot << EOF
 -- Definit le mot de passe root
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 
