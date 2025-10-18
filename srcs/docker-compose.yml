@@ -25,7 +25,8 @@ services:
       - inception-network
     env_file:
       - .env
-    depends_on: mariadb
+    depends_on:
+      - mariadb
     restart: unless-stopped
 
   nginx:
