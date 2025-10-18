@@ -1,16 +1,16 @@
 FROM debian:bookworm
 
 RUN apt-get update && apt-get install -y \
-	php8.1-fpm \
-	php8.1-mysql \
-	php8.1-cli \
-	php8.1-curl \
-	php8.1-gd \
-	php8.1-mbstring \
-	php8.1-xml \
-	php8.1-zip \
-	php8.1-intl \
-	php8.1-bcmath \
+	php-fpm \
+	php-mysql \
+	php-cli \
+	php-curl \
+	php-gd \
+	php-mbstring \
+	php-xml \
+	php-zip \
+	php-intl \
+	php-bcmath \
 	curl \
 	mariadb-client \
 	&& rm -rf /var/lib/apt/lists/*
