@@ -61,15 +61,15 @@ up:
 
 down:
 				@docker compose -f $(COMPOSE_FILE) down
-				@echo "\n� $(YELLOW)Services stopped$(DEFAULT)\n"
+				@echo "\n❌ $(YELLOW)Services stopped$(DEFAULT)\n"
 
 stop:
 				@docker compose -f $(COMPOSE_FILE) stop
-				@echo "\n⏸️  $(YELLOW)Services paused$(DEFAULT)\n"
+				@echo "\n⏸️ $(YELLOW)Services paused$(DEFAULT)\n"
 
 start:
 				@docker compose -f $(COMPOSE_FILE) start
-				@echo "\n▶️  $(GREEN)Services resumed$(DEFAULT)\n"
+				@echo "\n▶️ $(GREEN)Services resumed$(DEFAULT)\n"
 
 status:
 				@docker compose -f $(COMPOSE_FILE) ps
@@ -83,10 +83,9 @@ clean:			down
 				@echo "✅ $(GREEN)Clean completed$(DEFAULT)\n"
 
 fclean:			down
-				@echo "🗑️  $(RED)Removing all containers, networks, images and volumes...$(DEFAULT)"
+				@echo "🗑️ $(RED)Removing all containers, networks, images and volumes...$(DEFAULT)"
 				@docker system prune -af --volumes
-				@sudo rm -rf $(DATA_PATH)/wordpress
-				@sudo rm -rf $(DATA_PATH)/mariadb
+				@sudo rm -rf $(DATA_PATH)
 				@echo "✅ $(GREEN)Full clean completed$(DEFAULT)\n"
 
 re:				fclean all
