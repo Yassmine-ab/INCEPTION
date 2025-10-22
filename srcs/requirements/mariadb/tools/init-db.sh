@@ -17,11 +17,29 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
 		sleep 1
 	done
 
+	if [ ! -d /var/lib/mysql/mysql ] || [ ! -f /var/lib/mysql/.initialized ]; then
+    echo "=== Initializing MariaDB database ==="
+    # Remove existing data if corrupted
+    rm -rf /var/lib/mysql/*
+    
+    echo "=== Installing MariaDB system tables ==="
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql
+
+    echo "=== Starting temporary MariaDB instance ==="
+    mysqld --user=mysql --datadir=/var/lib/mysql --skip-networking & pid="$!"
+
+    for i in {30..0}; do
+        if mysqladmin ping --silent; then
+            break
+        fi
+        echo 'MySQL init process in progress...'
+        sleep 1
+    done
+
 	if [ "$i" = 0 ]; then
 		echo "MariaDB failed to start"
 		exit 1
 	fi
-
 	mysql -uroot << EOF
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 DELETE FROM mysql.user WHERE User='';
@@ -29,13 +47,15 @@ DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.
 DROP DATABASE IF EXISTS test;
 DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
-CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
-GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
+DROP USER IF EXISTS '${MYSQL_USER}'@'%';
+CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
 FLUSH PRIVILEGES;
 EOF
 
 	mysqladmin -uroot shutdown
 	wait "$pid"
+	touch /var/lib/mysql/.initialized
 fi
 
 exec mysqld --user=mysql --datadir=/var/lib/mysql --console
