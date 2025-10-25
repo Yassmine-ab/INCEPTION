@@ -1,2 +1,5 @@
 # Subject
 *.subject
+
+# Environment variables
+.env

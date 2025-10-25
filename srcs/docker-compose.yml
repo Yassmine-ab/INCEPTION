@@ -2,7 +2,7 @@ services:
   mariadb:
     container_name: mariadb
     build: ./requirements/mariadb
-    image: mariadb:inception
+    image: mariadb
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
@@ -14,7 +14,7 @@ services:
   wordpress:
     container_name: wordpress
     build: ./requirements/wordpress
-    image: wordpress:inception
+    image: wordpress
     volumes:
       - wordpress_data:/var/www/html
     networks:
@@ -28,7 +28,7 @@ services:
   nginx:
     container_name: nginx
     build: ./requirements/nginx
-    image: nginx:inception
+    image: nginx
     volumes:
       - wordpress_data:/var/www/html
     networks:
