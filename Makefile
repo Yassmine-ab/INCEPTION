@@ -1,20 +1,16 @@
-################################################################################
-#                                     COLORS                                   #
-################################################################################
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ LAYOUT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 DEFAULT			= \033[0m
-RED				= \033[1;31m
 GREEN			= \033[1;32m
-YELLOW			= \033[1;33m
-BLUE			= \033[1;34m
-MAGENTA			= \033[1;35m
 CYAN			= \033[1;36m
-LIGHT_CYAN		= \033[1;96m
-WHITE			= \033[1;37m
 
-################################################################################
-#                                     HEADER                                   #
-################################################################################
+define ANIMATION_FRAME
+				@for frame in ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏; do \
+				printf "\033[2K$$frame $(1)...\r"; \
+				sleep 0.02; \
+				done; \
+				printf "\n"
+endef
 
 define HEADER
 
@@ -34,17 +30,16 @@ define HEADER
 endef
 export HEADER
 
-################################################################################
-#                                     CONFIG                                   #
-################################################################################
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ VARIABLES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FILE_COUNT =	$(words $(SRC))
 COMPOSE_FILE	= ./srcs/docker-compose.yml
 DATA_PATH		= /home/yaabdall/data
-LOGIN			= yaabdall
+LOGIN			= yassabda
 
-################################################################################
-#                                     RULES                                    #
-################################################################################
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ RULES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 all:
 				@echo "$$HEADER"
@@ -54,6 +49,19 @@ all:
 				@docker compose -f $(COMPOSE_FILE) up -d --build
 				@echo "\n✅ $(GREEN)Inception is running!$(DEFAULT)"
 				@echo "🌐 Visit: $(CYAN)https://$(LOGIN).42.fr$(DEFAULT)\n"
+
+clean:			down
+				$(call ANIMATION_FRAME,Cleaning containers and networks...)
+				@docker system prune -af
+				@printf "$(GREEN)✓$(DEFAULT) Cleaned\n"
+
+fclean:			down
+				$(call ANIMATION_FRAME,Removing all containers, networks, images and volumes...)
+				@docker system prune -af --volumes
+				@sudo rm -rf $(DATA_PATH)
+				@printf "$(GREEN)✓$(DEFAULT) Removed\n"
+
+re:				fclean all
 
 up:
 				@docker compose -f $(COMPOSE_FILE) up -d
@@ -77,29 +85,19 @@ status:
 logs:
 				@docker compose -f $(COMPOSE_FILE) logs -f
 
-clean:			down
-				@echo "🧹 $(RED)Cleaning containers and networks...$(DEFAULT)"
-				@docker system prune -af
-				@echo "✅ $(GREEN)Clean completed$(DEFAULT)\n"
-
-fclean:			down
-				@echo "🗑️ $(RED)Removing all containers, networks, images and volumes...$(DEFAULT)"
-				@docker system prune -af --volumes
-				@sudo rm -rf $(DATA_PATH)
-				@echo "✅ $(GREEN)Full clean completed$(DEFAULT)\n"
-
-re:				fclean all
-
 help:
-				@echo "\n$(CYAN)all$(DEFAULT)		- Build and start all services"
-				@echo "$(CYAN)up$(DEFAULT)		- Start all services"
-				@echo "$(CYAN)down$(DEFAULT)		- Stop all services"
-				@echo "$(CYAN)stop$(DEFAULT)		- Pause all services"
-				@echo "$(CYAN)start$(DEFAULT)		- Resume all services"
-				@echo "$(CYAN)status$(DEFAULT)		- Show services status"
-				@echo "$(CYAN)logs$(DEFAULT)		- Show and follow services logs"
-				@echo "$(CYAN)clean$(DEFAULT)		- Stop and remove containers/networks"
-				@echo "$(CYAN)fclean$(DEFAULT)		- Full cleanup (containers/networks/volumes/data)"
-				@echo "$(CYAN)re$(DEFAULT)		- Rebuild everything from scratch\n"
+				@printf "Usage: make [target]\n"
+				@printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+				@printf "$(CYAN)all$(DEFAULT)		- Build and start all services\n"
+				@printf "$(CYAN)clean$(DEFAULT)		- Stop and remove containers/networks\n"
+				@printf "$(CYAN)fclean$(DEFAULT)		- Full cleanup (containers/networks/volumes/data)\n"
+				@printf "$(CYAN)re$(DEFAULT)		- Rebuild everything from scratch\n"
+				@printf "$(CYAN)up$(DEFAULT)		- Start all services\n"
+				@printf "$(CYAN)down$(DEFAULT)		- Stop all services\n"
+				@printf "$(CYAN)stop$(DEFAULT)		- Pause all services\n"
+				@printf "$(CYAN)start$(DEFAULT)		- Resume all services\n"
+				@printf "$(CYAN)status$(DEFAULT)		- Show services status\n"
+				@printf "$(CYAN)logs$(DEFAULT)		- Show and follow services logs\n"				
+				@printf "$(CYAN)help$(DEFAULT)		- Show this help message\n"
 
-.PHONY:			all up down stop start status logs clean fclean re help
+.PHONY:			all clean fclean re up down stop start status logs help
